@@ -70,8 +70,14 @@ func (p *player) Draw() {
 			X: 0,
 			Y: 40,
 		}, -float32(rotation), rl.Red)
-
 	}
+
+	newp := Point{200, 20}
+	rotation := Point{200, 50}
+	DrawPoint(newp, rl.Pink)
+	DrawPoint(rotation, rl.Green)
+	rotated := ownRotate(newp, rotation, 90)
+	DrawPoint(rotated, rl.Yellow)
 
 	DrawPoint(Point{float64(p.x), float64(p.y)}, rl.Green)
 	for i := range p.opponents {
@@ -273,5 +279,69 @@ func calculateRotation(angle float64) float64 {
 	}
 
 	return angleBeta
+
+}
+
+func getRectangleCorners(a, b Point) (Point, Point, Point, Point) {
+	width := 80.0
+	height := distance(a, b)
+	halfWidth := width / 2
+	halfHeight := height / 2
+
+	// Center of the rectangle
+	center := b
+
+	// Unrotated corners relative to the center
+	topLeft := Point{center.X - halfWidth, center.Y - halfHeight}
+	topRight := Point{center.X + halfWidth, center.Y - halfHeight}
+	bottomLeft := Point{center.X - halfWidth, center.Y + halfHeight}
+	bottomRight := Point{center.X + halfWidth, center.Y + halfHeight}
+
+	// Calculate angle for rotation
+	angle := calculateAngle(b, a)
+	angle += 180.0
+
+	// Rotate corners around the center
+	topLeft = rotatePoint(topLeft, center, angle)
+	topRight = rotatePoint(topRight, center, angle)
+	bottomLeft = rotatePoint(bottomLeft, center, angle)
+	bottomRight = rotatePoint(bottomRight, center, angle)
+
+	return topLeft, topRight, bottomLeft, bottomRight
+}
+
+func rotatePoint(p, center Point, angle float64) Point {
+	s := math.Sin(angle)
+	c := math.Cos(angle)
+
+	// Translate point to origin
+	p.X -= center.X
+	p.Y -= center.Y
+
+	// Rotate point
+	xnew := p.X*c - p.Y*s
+	ynew := p.X*s + p.Y*c
+
+	// Translate point back
+	p.X = xnew + center.X
+	p.Y = ynew + center.Y
+	return p
+}
+
+func ownRotate(p, center Point, angle float64) Point {
+	// where c, s are the cosine and sine of the angle.
+	//
+	// A rotation around an arbitrary point (u, v) is
+	//
+	// X = c (x - u) - s (y - v) + u
+	// Y = s (x - u) + c (y - v) + v
+
+	c := math.Cos(angle * math.Pi / 180)
+	s := math.Sin(angle * math.Pi / 180)
+
+	x := c*(p.X-center.X) - s*(p.Y-center.Y) + center.X
+	y := s*(p.X-center.X) + c*(p.Y-center.Y) + center.Y
+
+	return Point{x, y}
 
 }
