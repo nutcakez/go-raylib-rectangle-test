@@ -79,6 +79,35 @@ func (p *player) Draw() {
 	rotated := ownRotate(newp, rotation, 90)
 	DrawPoint(rotated, rl.Yellow)
 
+	// new stuff
+	newA := Point{400, 400}
+	newB := Point{432, 472}
+	width := 90
+	length := 220
+	iThinkTopRight := Point{newA.X + float64(width/2), newA.Y}
+	iThinkBotRight := Point{newA.X + float64(width/2), newA.Y + float64(length)}
+	newAngle := calculateAngle(newA, newB)
+	newRotation := calculateRotation(newAngle)
+	fmt.Println(newAngle, newRotation)
+
+	plusAngle := math.Tan((float64(width/2) / float64(length))) * (180 / math.Pi)
+
+	rpa := ownRotate(iThinkTopRight, newA, -float64(newRotation-270))
+	otherRpa := ownRotate(iThinkTopRight, newA, -float64(newRotation-270+180))
+	bottomRight := ownRotate(iThinkBotRight, newA, -float64(newRotation-270))
+	bottomLeft := ownRotate(iThinkBotRight, newA, -float64(newRotation-270-plusAngle-plusAngle))
+
+	fmt.Println(rpa)
+
+	rl.DrawRectanglePro(rl.NewRectangle(float32(newA.X), float32(newA.Y), float32(width/2), float32(length)), rl.Vector2{}, -float32(newRotation-270), rl.Pink)
+	DrawPoint(newA, rl.Green)
+	DrawPoint(newB, rl.Blue)
+	DrawPoint(iThinkTopRight, rl.DarkGreen)
+	DrawPoint(rpa, rl.Yellow)
+	DrawPoint(otherRpa, rl.Green)
+	DrawPoint(bottomRight, rl.Gold)
+	DrawPoint(bottomLeft, rl.Red)
+
 	DrawPoint(Point{float64(p.x), float64(p.y)}, rl.Green)
 	for i := range p.opponents {
 		DrawPoint(p.opponents[i], rl.Yellow)
@@ -92,7 +121,7 @@ func (s *spiner) Draw() {
 
 func main() {
 
-	rl.InitWindow(400, 400, "rectangle test")
+	rl.InitWindow(1400, 1400, "rectangle test")
 
 	defer rl.CloseWindow()
 
@@ -118,9 +147,11 @@ func main() {
 			X: 0,
 			Y: 40,
 		}, float32(calculateAngle(b, a)), rl.Yellow)
+
 		DrawPoint(a, rl.Green)
 		DrawPoint(b, rl.Blue)
 		DrawPoint(c, rl.Pink)
+
 		// hypotenuse := 40.0
 		// angleAlpha := 180.0 - 67.0 // in degrees
 		//
@@ -188,7 +219,7 @@ func DrawPoints(a, b, c, d Point) {
 }
 
 func DrawPoint(a Point, color color.RGBA) {
-	rl.DrawCircle(int32(a.X), int32(a.Y), 2, color)
+	rl.DrawCircle(int32(a.X), int32(a.Y), 4, color)
 }
 
 // perpendicular calculates a perpendicular vector.
