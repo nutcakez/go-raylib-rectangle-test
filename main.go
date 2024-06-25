@@ -64,12 +64,13 @@ func (p *player) Draw() {
 
 			rotation += 180
 		}
-		fmt.Println(rotation)
 
 		rl.DrawRectanglePro(rl.NewRectangle(float32(p.x), float32(p.y), float32(60), 80), rl.Vector2{
 			X: 0,
 			Y: 40,
 		}, -float32(rotation), rl.Red)
+
+		DrawPoints(getRectangleCorners(Point{float64(p.x), float64(p.y)}, Point{float64(p.targetX), float64(p.targetY)}, 80, 60))
 	}
 
 	newp := Point{200, 20}
@@ -88,7 +89,6 @@ func (p *player) Draw() {
 	iThinkBotRight := Point{newA.X + float64(width/2), newA.Y + float64(length)}
 	newAngle := calculateAngle(newA, newB)
 	newRotation := calculateRotation(newAngle)
-	fmt.Println(newAngle, newRotation)
 
 	plusAngle := math.Tan((float64(width/2) / float64(length))) * (180 / math.Pi)
 
@@ -96,8 +96,6 @@ func (p *player) Draw() {
 	otherRpa := ownRotate(iThinkTopRight, newA, -float64(newRotation-270+180))
 	bottomRight := ownRotate(iThinkBotRight, newA, -float64(newRotation-270))
 	bottomLeft := ownRotate(iThinkBotRight, newA, -float64(newRotation-270-plusAngle-plusAngle))
-
-	fmt.Println(rpa)
 
 	rl.DrawRectanglePro(rl.NewRectangle(float32(newA.X), float32(newA.Y), float32(width/2), float32(length)), rl.Vector2{}, -float32(newRotation-270), rl.Pink)
 	DrawPoint(newA, rl.Green)
@@ -212,10 +210,10 @@ func calculateAngle(a, b Point) float64 {
 }
 
 func DrawPoints(a, b, c, d Point) {
-	rl.DrawCircle(int32(a.X), int32(a.Y), 5, rl.Brown)
-	rl.DrawCircle(int32(b.X), int32(b.Y), 5, rl.Brown)
-	rl.DrawCircle(int32(c.X), int32(c.Y), 5, rl.Brown)
-	rl.DrawCircle(int32(d.X), int32(d.Y), 5, rl.Brown)
+	rl.DrawCircle(int32(a.X), int32(a.Y), 5, rl.Yellow)
+	rl.DrawCircle(int32(b.X), int32(b.Y), 5, rl.Orange)
+	rl.DrawCircle(int32(c.X), int32(c.Y), 5, rl.Pink)
+	rl.DrawCircle(int32(d.X), int32(d.Y), 5, rl.Pink)
 }
 
 func DrawPoint(a Point, color color.RGBA) {
@@ -313,32 +311,28 @@ func calculateRotation(angle float64) float64 {
 
 }
 
-func getRectangleCorners(a, b Point) (Point, Point, Point, Point) {
-	width := 80.0
-	height := distance(a, b)
-	halfWidth := width / 2
-	halfHeight := height / 2
+func getRectangleCorners(a, b Point, width, height float64) (Point, Point, Point, Point) {
+	iThinkTopRight := Point{a.X + float64(width/2), a.Y}
+	iThinkBotRight := Point{a.X + float64(width/2), a.Y + height}
+	newAngle := calculateAngle(a, b)
+	newRotation := calculateRotation(newAngle)
 
-	// Center of the rectangle
-	center := b
+	plusAngle := math.Tan((float64(width/2) / height)) * (180 / math.Pi)
 
-	// Unrotated corners relative to the center
-	topLeft := Point{center.X - halfWidth, center.Y - halfHeight}
-	topRight := Point{center.X + halfWidth, center.Y - halfHeight}
-	bottomLeft := Point{center.X - halfWidth, center.Y + halfHeight}
-	bottomRight := Point{center.X + halfWidth, center.Y + halfHeight}
+	rpa := ownRotate(iThinkTopRight, a, -float64(newRotation-270))
+	otherRpa := ownRotate(iThinkTopRight, a, -float64(newRotation-270+180))
 
-	// Calculate angle for rotation
-	angle := calculateAngle(b, a)
-	angle += 180.0
+	if a.X > b.X || (a.X == b.X && a.Y < b.Y) {
+		newRotation += 180
+	}
+	bottomRight := ownRotate(iThinkBotRight, a, -float64(newRotation-270))
+	bottomLeft := ownRotate(iThinkBotRight, a, -float64(newRotation-270-plusAngle-plusAngle/2))
 
-	// Rotate corners around the center
-	topLeft = rotatePoint(topLeft, center, angle)
-	topRight = rotatePoint(topRight, center, angle)
-	bottomLeft = rotatePoint(bottomLeft, center, angle)
-	bottomRight = rotatePoint(bottomRight, center, angle)
+	fmt.Println(newRotation)
 
-	return topLeft, topRight, bottomLeft, bottomRight
+	fmt.Println(bottomLeft, bottomRight)
+
+	return rpa, otherRpa, bottomRight, bottomLeft
 }
 
 func rotatePoint(p, center Point, angle float64) Point {
