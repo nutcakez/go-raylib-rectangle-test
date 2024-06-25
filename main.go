@@ -8,6 +8,10 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+type Rectangle struct {
+	Points [4]Point
+}
+
 type spiner struct {
 	angle float32
 }
@@ -71,6 +75,17 @@ func (p *player) Draw() {
 		}, -float32(rotation), rl.Red)
 
 		DrawPoints(getRectangleCorners(Point{float64(p.x), float64(p.y)}, Point{float64(p.targetX), float64(p.targetY)}, 80, 60))
+		pnts := CreateRectangle(getRectangleCorners(Point{float64(p.x), float64(p.y)}, Point{float64(p.targetX), float64(p.targetY)}, 80, 60))
+		tRectangle := rl.Rectangle{330, 340, 30, 30}
+		other := CreateRectangle(Point{330, 340}, Point{360, 340}, Point{330, 370}, Point{360, 370})
+
+		collisionColor := rl.Gold
+		if rectCollision(pnts, other) {
+			collisionColor = rl.Red
+		}
+
+		rl.DrawRectanglePro(tRectangle, rl.Vector2{}, 0, collisionColor)
+
 	}
 
 	newp := Point{200, 20}
@@ -369,4 +384,63 @@ func ownRotate(p, center Point, angle float64) Point {
 
 	return Point{x, y}
 
+}
+
+func dotProduct(v1, v2 Point) float64 {
+	return v1.X*v2.X + v1.Y*v2.Y
+}
+
+// subtractPoints subtracts one point from another to get a vector
+func subtractPoints(p1, p2 Point) Point {
+	return Point{p1.X - p2.X, p1.Y - p2.Y}
+}
+
+// perpendicularVector returns a vector that is perpendicular to the given vector
+func perpendicularVector(v Point) Point {
+	return Point{-v.Y, v.X}
+}
+
+// projectPoints projects the points of a rectangle onto an axis and returns the minimum and maximum values
+func projectPoints(rect Rectangle, axis Point) (float64, float64) {
+	min := dotProduct(subtractPoints(rect.Points[0], Point{0, 0}), axis)
+	max := min
+	for _, point := range rect.Points[1:] {
+		projection := dotProduct(subtractPoints(point, Point{0, 0}), axis)
+		if projection < min {
+			min = projection
+		}
+		if projection > max {
+			max = projection
+		}
+	}
+	return min, max
+}
+
+// overlap checks if two projection ranges overlap
+func overlap(minA, maxA, minB, maxB float64) bool {
+	return !(minA > maxB || minB > maxA)
+}
+
+// rectCollision checks if two rectangles collide using the Separating Axis Theorem
+func rectCollision(rect1, rect2 Rectangle) bool {
+	axes := []Point{
+		subtractPoints(rect1.Points[1], rect1.Points[0]),
+		subtractPoints(rect1.Points[3], rect1.Points[0]),
+		subtractPoints(rect2.Points[1], rect2.Points[0]),
+		subtractPoints(rect2.Points[3], rect2.Points[0]),
+	}
+
+	for _, axis := range axes {
+		perpAxis := perpendicularVector(axis)
+		minA, maxA := projectPoints(rect1, perpAxis)
+		minB, maxB := projectPoints(rect2, perpAxis)
+		if !overlap(minA, maxA, minB, maxB) {
+			return false
+		}
+	}
+	return true
+}
+
+func CreateRectangle(a, b, c, d Point) Rectangle {
+	return Rectangle{Points: [4]Point{a, b, c, d}}
 }
